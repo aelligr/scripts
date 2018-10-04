@@ -1,0 +1,105 @@
+! File containing the definition of vertical slices used by fieldextra.
+!----------------------------------------------------------------------------------------------------------
+! File format:
+! ------------
+!
+! Each slice is defined by a broken line, with control points expressed either
+! as geographical latitude/longitude, or as locations (refering to the active
+! location_list file), or as grid coordinates. Segments between control points
+! are either along earth (sphere) geodesic, or along straight line in grid
+! coordinate space. A slice is discretized according to the values of the keys
+! "slice_to_gridpoint" and "slice_resolution_factor"; it is also possible to
+! upscale (smooth) the fields along the slice by setting "slice_upscaling_factor".
+! Each slice is recognized by a unique tag. Currently, only NETCDF output is
+! compatible with slices (with a specific slice dimension and associated
+! attributes, see 8.13 in README.user).
+!
+! Each slice is defined in this file by a block of 3 or 4 lines, depending on
+! the way the control points are specified:
+! - the first line is a user specified description of the slice
+! - the second line specifies the tag associated with the slice, the number of
+!   control points defining the slice, and the algorithm used to build the slice.
+!   The following algorithms are supported:
+!      geodesic_latlon_slice, geodesic_loc_slice,
+!      geodesic_ij_slice, straight_ij_slice
+!        where:
+!        the first part of the string specifies the type of segments
+!        between the control points ('geodesic': geodesic along earth 
+!        great circles, 'straight': straight line in model coordinates),
+!        the second part of the string specifies how control points are
+!        expressed ('latlon_slice': as geographical lat/lon, 'ij_slice':
+!        as model coordinates, 'loc_slice': as location).
+! - for 'latlon_slice' : the third line lists the geog. latitude of the control points,
+!   in fixed format, expressed in (-90.,90.) [deg]; the fourth line lists the geog.
+!   longitude of the control points, in fixed format, expressed in (0.360.) [deg]
+! - for 'ij_slice' : the third line lists the i-coordinates of the control points,
+!   in fixed format; the fourth line lists the j-coordinates of the control points,
+!   in fixed format.
+! - for 'loc_slice' : the third line lists the locations, using the aliases
+!   defined in the active location_list file.
+!
+! All blank lines and all lines beginning with an exclamation mark are ignored.
+!
+!----------------------------------------------------------------------------------------------------------
+! The exact format for the 3 lines block defining a slice is:
+! (1) for control points expressed in geographical latitude / longitude 
+! aaa...                                [ free format ]
+! aaa... iii... aaa...                  [ free format, blank separated fields ]
+! fff.ffff  fff.ffff  fff.ffff  ......  [ n(1X,F9.4) , n: number of control points]
+! fff.ffff  fff.ffff  fff.ffff  ......  [ n(1X,F9.4) , n: number of control points]
+! (2) for control points expressed in model coordinates space
+! aaa...                                [ free format ]
+! aaa... iii... aaa...                  [ free format, blank separated fields ]
+! iiii  iiii  iiii  ......              [ n(1X,I5) ,  n: number of control points]
+! jjjj  jjjj  jjjj  ......              [ n(1X,I5) ,  n: number of control points]
+! (3) for control points expressed in location space
+! aaa...                                [ free format ]
+! aaa... iii... aaa...                  [ free format, blank separated fields ]
+! loc loc  ......                       [ n blank separated strings,  n: number of control points]
+!----------------------------------------------------------------------------------------------------------
+
+! Defined in (i,j) space
+!-----------------------
+!   j=100 
+!   (add additional control points to force the slice to follow j=100 instead of earth geodesic)
+!   (this can also be achieved by setting straight_ij_slice instead of geodesic_ij_slice)
+    Slice following model grid j=100
+    j100   5    geodesic_ij_slice  
+     1   100   200   300   393
+   100   100   100   100   100
+
+    Slice following model grid external boundary
+    ijlb   5  straight_ij_slice
+     1     1   393   393     1
+     1   338   338     1     1
+
+
+! Defined in (lat,lon) space
+!-----------------------
+    Slice along the path Geneve - St. Gallen - Munich
+    Geneve-Munich    3    geodesic_latlon_slice
+   46.2095   47.4240  48.1439
+    6.1359    9.3770  11.5672
+
+    Slice along the path GVE-PUY-AIG-MART-SIO-VIS
+    GVE-VIS          6   geodesic_latlon_slice
+   46.2500  46.5167  46.3259   46.1100   46.2900   46.3000
+    6.1333   6.6667   6.9208    7.0808    7.4500    7.8500
+
+! Defined in location space
+!-----------------------
+    Slice along Rhone valley, from Geneva to Visp
+    Rhone   6  geodesic_loc_slice
+   nat:GVE nat:PUY nat:AIG nat:MART nat:SIO nat:VIS
+
+    Slice from Lyon to Munich through Swiss Plateau
+    Lyon-Munich   6  geodesic_loc_slice
+   wmo:07481 nat:GVE nat:BER nat:KLO nat:STG wmo:10868
+
+    Slice along the path Lyon - Plateau - Memmingen
+    Lyon-Memmingen  11   geodesic_loc_slice
+   vcs:Lyon vcs:Bourget vcs:Fort vcs:GVA vcs:Yverdon vcs:Biel vcs:Grenchen vcs:Aarau vcs:ZRH1 vcs:ARH vcs:Memmingen
+
+    Slice along the path Malpensa - S.Gottardo - Stuttgart
+    Malpensa-Stutt  10   geodesic_loc_slice
+   vcs:Malpensa vcs:Agno vcs:Magadino vcs:Arbedo vcs:Biasca vcs:Faido vcs:SGOTT vcs:Silenen vcs:ZRH1 vcs:STT
